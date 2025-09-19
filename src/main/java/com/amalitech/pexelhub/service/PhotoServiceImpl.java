@@ -84,7 +84,6 @@ public class PhotoServiceImpl implements PhotoService {
 
   @Override
   public Map<String, Object> getPhotos(int offset, int limit) {
-    // Page number is calculated from the offset
     Pageable pageable = PageRequest.of(offset / limit, limit);
     Page<Photo> photoPage = photoRepository.findAll(pageable);
 

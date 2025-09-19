@@ -26,11 +26,12 @@
         <p class="feature-text">Upload a picture to get featured!</p>
       </div>
 
-      <div class="photo-grid" id="photoGrid">
-        <!-- Thymeleaf dynamic photo rendering from S3 -->
-        <div class="photo-item" th:each="photo, iterStat : ${photos}" th:if="${iterStat.index < 5}">
-          <img th:src="${photo.s3Url}" th:alt="${photo.description != null ? photo.description : 'Uploaded photo'}"
-            loading="lazy">
+        <div class="photo-grid" id="photoGrid">
+            <div class="photo-item" th:each="photo : ${photos}">
+                <img th:src="${photo.s3Url}" th:alt="${photo.description != null ? photo.description : 'Uploaded photo'}"
+                     loading="lazy">
+            </div>
+
         </div>
 
         <!-- Fallback if no photos exist -->
@@ -39,10 +40,10 @@
         </div>
       </div>
 
-      <button class="see-more-btn" id="seeMoreBtn" onclick="loadMoreImages()"
-        th:style="${photos != null and #lists.size(photos) > 5} ? '' : 'display: none;'">
-        See more
-      </button>
+        <button class="see-more-btn" id="seeMoreBtn" onclick="loadMoreImages()"
+                th:style="${!hasMore} ? 'display: none;' : ''">
+            See more
+        </button>
     </div>
   </main>
 

@@ -21,8 +21,6 @@ public class Photo {
   @Column(nullable = false, unique = true)
   private String s3Key;
 
-  private String presignedUrl;
-
   @NotNull
   private LocalDateTime createdAt;
 
