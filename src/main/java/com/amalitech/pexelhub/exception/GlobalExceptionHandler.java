@@ -14,11 +14,20 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Centralized REST exception handling returning consistent error payloads.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+  /**
+   * Handles IOExceptions typically arising from file processing.
+   *
+   * @param ex the thrown IOException
+   * @return 400 response with error details
+   */
   @ExceptionHandler(IOException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ResponseEntity<Map<String, String>> handleIOException(IOException ex) {
@@ -31,6 +40,12 @@ public class GlobalExceptionHandler {
     return ResponseEntity.badRequest().body(response);
   }
 
+  /**
+   * Handles exceeded upload size errors.
+   *
+   * @param ex the MaxUploadSizeExceededException
+   * @return 413 response with error details
+   */
   @ExceptionHandler(MaxUploadSizeExceededException.class)
   @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
   public ResponseEntity<Map<String, String>> handleMaxSizeException(MaxUploadSizeExceededException ex) {
@@ -41,6 +56,12 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(response);
   }
 
+  /**
+   * Catches any unhandled exceptions and returns a generic error payload.
+   *
+   * @param ex the unexpected exception
+   * @return 500 response with generic error details
+   */
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {

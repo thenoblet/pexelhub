@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -25,76 +24,102 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Default implementation of PhotoService backed by Amazon S3 for object storage
+ * and a JPA repository for metadata persistence.
+ */
 @Service
 public class PhotoServiceImpl implements PhotoService {
 
-  private final S3Client s3Client;
-  private final PhotoRepository photoRepository;
-  private final PhotoMapper photoMapper;
-  private final String bucketName;
+    private final S3Client s3Client;
+    private final PhotoRepository photoRepository;
+    private final PhotoMapper photoMapper;
+    private final String bucketName;
 
-  public PhotoServiceImpl(
-      PhotoRepository photoRepository,
-      S3Presigner s3Presigner,
-      S3Client s3Client,
-      PhotoMapper photoMapper,
-      @Value("${aws.s3.bucket.name}") String bucketName) {
-    this.photoRepository = photoRepository;
-    this.s3Client = s3Client;
-    this.photoMapper = photoMapper;
-    this.bucketName = bucketName;
-  }
-
-  @Override
-  public void uploadPhoto(MultipartFile file, String description) {
-    try {
-      String originalFilename = file.getOriginalFilename();
-      if (originalFilename == null || originalFilename.contains("..")) {
-        throw new FileUploadException("Invalid file name");
-      }
-
-      String sanitizedFilename = originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_");
-      String s3Key = "images/" + UUID.randomUUID() + "-" + sanitizedFilename;
-
-      PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-          .bucket(bucketName)
-          .key(s3Key)
-          .contentType(file.getContentType())
-          .build();
-
-      s3Client.putObject(putObjectRequest,
-          RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-
-      Photo photo = new Photo();
-      photo.setDescription(description);
-      photo.setS3Key(s3Key);
-      photoRepository.save(photo);
-
-    } catch (IOException ex) {
-      throw new FileUploadException("Failed to upload file: " + ex.getMessage(), ex);
+    /**
+     * Creates a new service instance.
+     *
+     * @param photoRepository repository for Photo entities
+     * @param s3Client        AWS S3 synchronous client
+     * @param photoMapper     mapper to convert entities to DTOs with presigned URLs
+     * @param bucketName      name of the S3 bucket
+     */
+    public PhotoServiceImpl(
+            PhotoRepository photoRepository,
+            S3Client s3Client,
+            PhotoMapper photoMapper,
+            @Value("${aws.s3.bucket.name}") String bucketName) {
+        this.photoRepository = photoRepository;
+        this.s3Client = s3Client;
+        this.photoMapper = photoMapper;
+        this.bucketName = bucketName;
     }
-  }
 
-  @Override
-  public List<PhotoResponse> getAllPhotos() {
-    return photoRepository.findAll().stream()
-        .map(photoMapper::toPhotoResponse)
-        .collect(Collectors.toList());
-  }
+    /** {@inheritDoc} */
+    @Override
+    public void uploadPhoto(MultipartFile file, String description) {
+        try {
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null || originalFilename.contains("..")) {
+                throw new FileUploadException("Invalid file name");
+            }
 
-  @Override
-  public Map<String, Object> getPhotos(int offset, int limit) {
-    Pageable pageable = PageRequest.of(offset / limit, limit);
-    Page<Photo> photoPage = photoRepository.findAll(pageable);
+            String sanitizedFilename = originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_");
+            String s3Key = "images/" + UUID.randomUUID() + "-" + sanitizedFilename;
 
-    List<PhotoResponse> photoResponses = photoPage.getContent().stream()
-            .map(photoMapper::toPhotoResponse)
-            .collect(Collectors.toList());
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .contentType(file.getContentType())
+                    .build();
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("photos", photoResponses);
-    response.put("hasMore", photoPage.hasNext());
+            s3Client.putObject(putObjectRequest,
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
-    return response;
-  }
+            Photo photo = new Photo();
+            photo.setDescription(description);
+            photo.setS3Key(s3Key);
+            photoRepository.save(photo);
+
+        } catch (IOException ex) {
+            throw new FileUploadException("Failed to upload file: " + ex.getMessage(), ex);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public List<PhotoResponse> getAllPhotos() {
+        return photoRepository.findAll().stream()
+                .map(photoMapper::toPhotoResponse)
+                .collect(Collectors.toList());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Map<String, Object> getPhotos(int offset, int limit) {
+        Pageable pageable = PageRequest.of(offset / limit, limit);
+        Page<Photo> photoPage = photoRepository.findPhotos(pageable);
+
+        List<PhotoResponse> photoResponses = photoPage.getContent().stream()
+                .map(photoMapper::toPhotoResponse)
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("photos", photoResponses);
+        response.put("hasMore", photoPage.hasNext());
+        response.put("totalElements", photoPage.getTotalElements());
+        response.put("currentOffset", offset);
+        response.put("nextOffset", offset + limit);
+
+        return response;
+    }
+
+    /**
+     * Returns the total count of photos stored.
+     *
+     * @return number of photos
+     */
+    public long getTotalPhotoCount() {
+        return photoRepository.count();
+    }
 }
