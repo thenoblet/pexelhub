@@ -2,7 +2,6 @@ let selectedFiles = [];
 let currentOffset = 5;
 let hasMoreImages = true;
 
-// Modal functions
 function openUploadModal() {
     document.getElementById('uploadModal').classList.add('show');
     document.body.style.overflow = 'hidden';
@@ -21,7 +20,6 @@ document.getElementById('uploadModal').addEventListener('click', function(e) {
     }
 });
 
-// File handling
 document.getElementById('fileInput').addEventListener('change', handleFileSelect);
 
 function handleFileSelect(e) {
@@ -128,7 +126,6 @@ document.getElementById('imageDescription').addEventListener('input', function(e
     const currentLength = e.target.value.length;
     charCount.textContent = currentLength;
 
-    // Change color when approaching limit
     if (currentLength > 450) {
         charCount.style.color = '#ff6b6b';
     } else if (currentLength > 400) {
@@ -153,7 +150,6 @@ function uploadFiles() {
     uploadButton.disabled = true;
     uploadButton.textContent = 'Uploading...';
 
-    // Create FormData for S3 upload
     const formData = new FormData();
     selectedFiles.forEach(file => {
         formData.append('file', file);
@@ -171,9 +167,8 @@ function uploadFiles() {
         })
         .then(data => {
             console.log('Upload successful:', data);
-            alert('File !');
+            alert('Photo Uploaded to PexelHub!');
             closeUploadModal();
-            // Refresh the page to show new photos from S3
             window.location.reload();
         })
         .catch(error => {
@@ -214,10 +209,8 @@ function resetUploadForm() {
     document.getElementById('charCount').textContent = '0';
     document.getElementById('charCount').style.color = '#999';
 
-    // Hide description section
     toggleDescriptionSection();
 
-    // Clear any existing progress bars
     const progressFills = document.querySelectorAll('.progress-fill');
     progressFills.forEach(fill => fill.style.width = '0%');
 }
@@ -226,14 +219,12 @@ function loadMoreImages() {
     const seeMoreBtn = document.getElementById('seeMoreBtn');
 
     if (!hasMoreImages) {
-        return; // Do nothing if no more images
+        return;
     }
 
-    // Show loading state
     seeMoreBtn.textContent = 'Loading...';
     seeMoreBtn.disabled = true;
 
-    // Fetch more images from Spring Boot backend (S3 URLs)
     fetch(`/api/v1/photos/more?offset=${currentOffset}&limit=5`)
         .then(response => {
             if (!response.ok) {
