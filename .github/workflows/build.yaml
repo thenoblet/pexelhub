@@ -1,0 +1,112 @@
+# ------------------------------------------------------------------------------
+# GitHub Actions Workflow: Build and Push to Amazon ECR
+#
+# Author: Patrick Noblet Appiah (@thenoblet)
+# Date:   09-09-2025
+#
+# Purpose:
+#   - On each push to the main branch, this workflow:
+#       1. Builds and tags a Docker image of the application.
+#       2. Pushes the image to Amazon Elastic Container Registry (ECR).
+#       3. Generates ECS task and deployment artifacts (taskdef.json, appspec.yml).
+#       4. Packages and uploads these artifacts to S3 for CodePipeline to consume.
+#
+# Notes:
+#   - Authentication to AWS is handled via OIDC (no long-lived AWS keys).
+#   - CodePipeline + EventBridge integration will automatically pick up the S3
+#     deployment package and proceed with ECS deployment.
+#   - IMAGE_TAG is pinned to the Git commit SHA for immutability, while 'latest'
+#     is used for ECS service updates.
+#
+# Security:
+#   - Requires a pre-configured IAM role
+#     which is created in the template (security.yaml) with ECR, ECS, and S3 permissions.
+#   - OIDC avoids the need to store static AWS credentials in GitHub Secrets.
+#
+# ------------------------------------------------------------------------------
+
+name: Build and Push to Amazon ECR
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: "eu-central-1"
+      ECR_REPOSITORY: "pexelhub-ecr"
+      ARTIFACT_BUCKET: "artif-bkt"
+      PHOTO_BUCKET: "pexelhub-bkt"
+      TASK_DEFINITION_FAMILY: "pexelhub"
+      CONTAINER_NAME: "pexelhub-app-container"
+
+    steps:
+      # ------------------------------
+      # Step 1: Checkout repo
+      # ------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ------------------------------
+      # Step 2: AWS OIDC Auth
+      # ------------------------------
+      - name: Configure AWS Credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubOIDCRole
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: ECSPushFromGitHubActions
+
+      # ------------------------------
+      # Step 3: Log in to Amazon ECR
+      # ------------------------------
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ------------------------------
+      # Step 4: Build & Push image
+      # ------------------------------
+      - name: Build, tag, and push Docker image
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+          echo "image-uri=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_OUTPUT
+
+
+      # ------------------------------
+      # Step 5: Zip & Upload deploy files
+      # ------------------------------
+      - name: Package and upload deployment files
+        run: |
+          cd deploy
+          zip ../deployment-files.zip appspec.yml taskdef.json imageDetail.json
+          cd ..
+
+          aws s3 cp deployment-files.zip s3://${{ env.ARTIFACT_BUCKET }}/deployment-files.zip --region ${{ env.AWS_REGION }}
+          echo "=> Uploaded deployment files to s3://${{ env.ARTIFACT_BUCKET }}/deployment-files.zip"
+
+      # ------------------------------
+      # Step 6: Summary
+      # ------------------------------
+      - name: Deployment Summary
+        run: |
+          echo "=== Deployment Summary: ==="
+          echo "- Docker image pushed: ${{ steps.build-image.outputs.image-uri }}"
+          echo "- Deployment files uploaded to S3"
+          echo "- EventBridge/CodePipeline will trigger ECS deployment"
