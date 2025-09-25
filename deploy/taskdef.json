@@ -11,7 +11,7 @@
   "containerDefinitions": [
     {
       "name": "pexelhub-app-container",
-      "image": "<IMAGE_URI>",
+      "image": "266735814394.dkr.ecr.eu-central-1.amazonaws.com/pexelhub-ecr:latest",
       "essential": true,
       "portMappings": [
         {
@@ -33,7 +33,7 @@
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/pexelhub",
-          "awslogs-region": "<AWS_REGION>",
+          "awslogs-region": "eu-central-1",
           "awslogs-stream-prefix": "ecs"
         }
       },
