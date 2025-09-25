@@ -40,7 +40,7 @@
       "environment": [
         {
           "name": "DB_HOST",
-          "value": "<DB_HOST>"
+          "value": "ph-base-stk-rdsinstance-iitcr6zm8bhv.cxii6mikg9c3.eu-central-1.rds.amazonaws.com"
         },
         {
           "name": "DB_PORT",
@@ -48,17 +48,17 @@
         },
         {
           "name": "AWS_S3_BUCKET",
-          "value": "<PHOTO_BUCKET>"
+          "value": "pexelhub-bkt"
         }
       ],
       "secrets": [
         {
           "name": "DB_USERNAME",
-          "valueFrom": "<DB_SECRET_ARN>:username::"
+          "valueFrom": "arn:aws:secretsmanager:eu-central-1:266735814394:secret:rds-master-secret-63zJQK:username::"
         },
         {
           "name": "DB_PASSWORD",
-          "valueFrom": "<DB_SECRET_ARN>:password::"
+          "valueFrom": "arn:aws:secretsmanager:eu-central-1:266735814394:secret:rds-master-secret-63zJQK:password::"
         }
       ]
     }
