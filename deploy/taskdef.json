@@ -1,5 +1,5 @@
 {
-  "family": "arn:aws:ecs:eu-central-1:266735814394:task-definition/pexelhub:2",
+  "family": "pexelhub",
   "networkMode": "awsvpc",
   "requiresCompatibilities": [
     "FARGATE"
