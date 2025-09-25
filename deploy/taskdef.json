@@ -1,16 +1,16 @@
 {
-  "family": "<TASK_DEFINITION_FAMILY>",
+  "family": "arn:aws:ecs:eu-central-1:266735814394:task-definition/pexelhub:2",
   "networkMode": "awsvpc",
   "requiresCompatibilities": [
     "FARGATE"
   ],
   "cpu": "256",
   "memory": "512",
-  "executionRoleArn": "<EXECUTION_ROLE_ARN>",
-  "taskRoleArn": "<TASK_ROLE_ARN>",
+  "executionRoleArn": "arn:aws:iam::266735814394:role/PH-BASE-STK-ECSExecutionRole-Wz6urxcvzA8p",
+  "taskRoleArn": "arn:aws:iam::266735814394:role/PH-BASE-STK-ECSTaskRole-oBITGsp1ly1l",
   "containerDefinitions": [
     {
-      "name": "<CONTAINER_NAME>",
+      "name": "pexelhub-app-container",
       "image": "<IMAGE_URI>",
       "essential": true,
       "portMappings": [
