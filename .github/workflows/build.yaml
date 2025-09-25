@@ -8,7 +8,7 @@
 #   - On each push to the main branch, this workflow:
 #       1. Builds and tags a Docker image of the application.
 #       2. Pushes the image to Amazon Elastic Container Registry (ECR).
-#       3. Generates ECS task and deployment artifacts (taskdef.json, appspec.yml).
+#       3. Generates ECS task and deployment artifacts (taskdef.json, appspec.yaml).
 #       4. Packages and uploads these artifacts to S3 for CodePipeline to consume.
 #
 # Notes:
@@ -95,7 +95,7 @@ jobs:
       - name: Package and upload deployment files
         run: |
           cd deploy
-          zip ../deployment-files.zip appspec.yml taskdef.json imageDetail.json
+          zip ../deployment-files.zip appspec.yaml taskdef.json imageDetail.json
           cd ..
 
           aws s3 cp deployment-files.zip s3://${{ env.ARTIFACT_BUCKET }}/deployment-files.zip --region ${{ env.AWS_REGION }}
