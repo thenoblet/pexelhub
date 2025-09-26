@@ -7,31 +7,27 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
 /**
- * JPA entity representing a photo stored in S3 with metadata persisted in the database.
+ * JPA entity representing a photo stored in S3 with metadata persisted in the
+ * database.
  */
 @Entity
 @Table(name = "photos")
 public class Photo {
 
-  /** Primary key identifier. */
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   @Column(unique = true, nullable = false)
   private UUID id;
 
-  /** Optional human-readable description of the photo. */
   @Column(length = 500)
   private String description;
 
-  /** Unique S3 object key for the stored image. */
   @Column(nullable = false, unique = true)
   private String s3Key;
 
-  /** Timestamp when the entity was created. */
   @NotNull
   private LocalDateTime createdAt;
 
-  /** Timestamp when the entity was last updated. */
   @NotNull
   private LocalDateTime updatedAt;
 
