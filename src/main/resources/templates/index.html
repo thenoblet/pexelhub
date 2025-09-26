@@ -2,90 +2,89 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PexelHub - Community Photo Gallery</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PexelHub - Community Photo Gallery</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
-<header class="header">
+  <header class="header">
     <div class="container">
-        <div class="logo">
-            <img th:src="@{/images/logo.png}" alt="PexelHub Logo" class="logo-img">
-            <span class="logo-text">PexelHub.</span>
-        </div>
+      <div class="logo">
+        <img th:src="@{/images/logo.png}" alt="PexelHub Logo" class="logo-img">
+        <span class="logo-text">PexelHub.</span>
+      </div>
     </div>
-</header>
+  </header>
 
-<main class="main-content">
+  <main class="main-content">
     <div class="container">
-        <div class="section-header">
-            <h2>We value - V2</h2>
-            <h1>Community</h1>
-            <button class="upload-btn" onclick="openUploadModal()">Upload</button>
-            <p class="feature-text">Upload a photo to get featured!</p>
+      <div class="section-header">
+        <h2>We value</h2>
+        <h1>Community</h1>
+        <button class="upload-btn" onclick="openUploadModal()">Upload</button>
+        <p class="feature-text">Upload a photo to get featured!</p>
+      </div>
+
+      <div class="photo-grid" id="photoGrid">
+        <div class="photo-item" th:each="photo : ${photos}">
+          <img th:src="${photo.s3Url}" th:alt="${photo.description != null ? photo.description : 'Uploaded photo'}"
+            loading="lazy">
         </div>
 
-        <div class="photo-grid" id="photoGrid">
-            <div class="photo-item" th:each="photo : ${photos}">
-                <img th:src="${photo.s3Url}" th:alt="${photo.description != null ? photo.description : 'Uploaded photo'}"
-                     loading="lazy">
-            </div>
+      </div>
 
-        </div>
-
-        <!-- Fallback if no photos exist -->
-        <div th:if="${photos == null or #lists.isEmpty(photos)}" class="no-photos-message">
-            <p>No photos uploaded yet. Be the first to share!</p>
-        </div>
+      <!-- Fallback if no photos exist -->
+      <div th:if="${photos == null or #lists.isEmpty(photos)}" class="no-photos-message">
+        <p>No photos uploaded yet. Be the first to share!</p>
+      </div>
     </div>
 
-        <button class="see-more-btn" id="seeMoreBtn" onclick="loadMoreImages()">
-            See more
-        </button>
-</main>
+    <button class="see-more-btn" id="seeMoreBtn" onclick="loadMoreImages()">
+      See more
+    </button>
+  </main>
 
-<!-- Upload Modal -->
-<div id="uploadModal" class="modal">
+  <!-- Upload Modal -->
+  <div id="uploadModal" class="modal">
     <div class="modal-content">
-        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-            <div class="upload-icon">
-                <svg viewBox="0 0 24 24">
-                    <path d="M19 7v2.99s-1.99.01-2 0V7h-3s.01-1.99 0-2h3V2h2v3h3v2h-3zm-3 4V8h-3V5H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8h-3zM5 19l3-4 2 3 3-4 4 5H5z" />
-                </svg>
-            </div>
-            <div class="upload-text">Drop your images here, or <span class="browse-link">browse</span></div>
-            <div class="upload-subtext">Supports PNG, JPG or WEBP up to 10MB</div>
+      <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19 7v2.99s-1.99.01-2 0V7h-3s.01-1.99 0-2h3V2h2v3h3v2h-3zm-3 4V8h-3V5H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8h-3zM5 19l3-4 2 3 3-4 4 5H5z" />
+          </svg>
         </div>
+        <div class="upload-text">Drop your images here, or <span class="browse-link">browse</span></div>
+        <div class="upload-subtext">Supports PNG, JPG or WEBP up to 10MB</div>
+      </div>
 
-        <input type="file" id="fileInput" class="file-input" accept="image/*" multiple>
+      <input type="file" id="fileInput" class="file-input" accept="image/*" multiple>
 
-        <div id="filePreview" class="file-preview"></div>
+      <div id="filePreview" class="file-preview"></div>
 
-        <!-- Description section - shows when images are selected -->
-        <div id="descriptionSection" class="description-section">
-            <label for="imageDescription" class="description-label">Add a description (optional)</label>
-            <textarea
-                    id="imageDescription"
-                    class="description-input"
-                    placeholder="Tell us about your photo... What makes it special? Where was it taken?"
-                    maxlength="500"></textarea>
-            <div class="char-count">
-                <span id="charCount">0</span>/500
-            </div>
+      <!-- Description section - shows when images are selected -->
+      <div id="descriptionSection" class="description-section">
+        <label for="imageDescription" class="description-label">Add a description (optional)</label>
+        <textarea id="imageDescription" class="description-input"
+          placeholder="Tell us about your photo... What makes it special? Where was it taken?"
+          maxlength="500"></textarea>
+        <div class="char-count">
+          <span id="charCount">0</span>/500
         </div>
+      </div>
 
-        <div class="modal-buttons">
-            <button class="btn btn-cancel" onclick="closeUploadModal()">Cancel</button>
-            <button class="btn btn-upload" id="uploadButton" onclick="uploadFiles()" disabled>Upload</button>
-        </div>
+      <div class="modal-buttons">
+        <button class="btn btn-cancel" onclick="closeUploadModal()">Cancel</button>
+        <button class="btn btn-upload" id="uploadButton" onclick="uploadFiles()" disabled>Upload</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<script th:src="@{/js/script.js}"></script>
+  <script th:src="@{/js/script.js}"></script>
 </body>
 
 </html>
