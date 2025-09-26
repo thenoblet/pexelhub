@@ -11,7 +11,7 @@ import jakarta.validation.constraints.*;
  * database.
  */
 @Entity
-@Table(name = "photos")
+@Table(name = "images")
 public class Photo {
 
   @Id
